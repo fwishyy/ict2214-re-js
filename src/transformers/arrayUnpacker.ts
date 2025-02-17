@@ -7,6 +7,13 @@ const traverse = require('@babel/traverse').default;
 const generate = require('@babel/generator').default;
 const types = require('@babel/types');
 
+/*
+    * Unpacks string elements that were moved out into arrays
+    * eg. var _0xc48f=["hello world","log"];
+    * console[_0xc48f[1]](_0xc48f[0]);
+    * @param {string} code - The code to be transformed
+*/
+
 export class ArrayUnpacker extends Transformation {
     execute(code: string): string {
 
