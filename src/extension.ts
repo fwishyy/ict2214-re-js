@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// you might want to test each transformation individually first
 		// TODO: verify that multiple transformations work concurrently
 		let transformations = [];
-		transformations.push(new StringDecoder());
+		transformations.push(new ProxyFunctions());
 
 		let deobfuscatedSrc = src;
 		for (let transformation of transformations) {
