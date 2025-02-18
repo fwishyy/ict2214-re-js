@@ -18,29 +18,52 @@ export class ArrayUnpacker extends Transformation {
     execute(code: string): string {
 
         const ast = parser.parse(code);
+        const nodesToRemove: string[] = [];
 
         traverse(ast, {
-            enter(path: any) {
-                if (!path.node.property) { return; }
-                if (!types.isNumericLiteral(path.node.property)) { return; }
+            MemberExpression(path: any) {
+                const { object, property } = path.node;
 
-                let idx = path.node.property.value;
+                let idx = property.value;
+                let binding = path.scope.getBinding(object.name);
 
-                let binding = path.scope.getBinding(path.node.object.name);
-                if (!binding) { return; }
+                if (!binding) {
+                    return;
+                }
 
                 if (types.isVariableDeclarator(binding.path.node)) {
                     let array = binding.path.node.init;
-                    if (idx >= array.length) { return; }
-
-                    let member = array.elements[idx];
-
-                    if (types.isStringLiteral(member)) {
-                        path.replaceWith(member);
+                    nodesToRemove.push(object.name);
+                    if (idx >= array.length) {
+                        return;
                     }
+
+                    let value = array.elements[idx];
+
+                    if (types.isStringLiteral(value)) {
+                        path.replaceWith(value);
+                    }
+                }
+            },
+        });
+
+        // traverse one more time to cleanup calling conventions and the useless array declarations
+        traverse(ast, {
+            VariableDeclarator(path: any) {
+                const { id } = path.node;
+                if (types.isIdentifier(id) && nodesToRemove.includes(id.name)) {
+                    path.remove();
+                }
+            },
+            CallExpression(path: any) {
+                const property = path.node.callee.property;
+                if (types.isStringLiteral(property)) {
+                    path.node.callee.property = types.Identifier(property.value);
+                    path.node.callee.computed = false;
                 }
             }
         });
+
 
         return generate(ast).code;
     }
