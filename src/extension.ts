@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { Transformation } from './transformers/transformation';
 import { ArrayUnpacker } from './transformers/arrayUnpacker';
 import { StringDecoder } from './transformers/stringDecoder';
+import { ProxyFunctions } from './transformers/proxyFunctions';
 
 // This is the function that is called when the extension is activated
 // Currently configured to a super barebones preview of the current file
