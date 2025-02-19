@@ -4,6 +4,7 @@ import { parse } from '@babel/parser';
 import * as types from '@babel/types';
 import { ArrayUnpacker } from './transformers/arrayUnpacker';
 import { StringDecoder } from './transformers/stringDecoder';
+import { ProxyFunctions } from './transformers/proxyFunctions';
 
 /*
     * Executes various transformations on the code based on the configuration
@@ -21,6 +22,9 @@ export default class Deobfuscator {
 
     execute(): string {
         const transformations = [];
+        if (this.config.removeProxyFunctions) {
+            transformations.push(new ProxyFunctions());
+        }
         if (this.config.unpackArrays) {
             transformations.push(new ArrayUnpacker());
         }

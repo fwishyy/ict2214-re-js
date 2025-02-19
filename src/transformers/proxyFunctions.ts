@@ -1,11 +1,10 @@
 // proxyFunctions.ts
 
 import { Transformation } from "./transformation";
+import { parse } from "@babel/parser";
+import * as types from "@babel/types";
+import traverse from "@babel/traverse";
 
-const parser = require("@babel/parser");
-const traverse = require("@babel/traverse").default;
-const generate = require("@babel/generator").default;
-const types = require("@babel/types");
 
 /**
  * Helper function to evaluate simple numeric expressions using
@@ -70,12 +69,7 @@ function evaluateExpression(expr: any, paramMap: Record<string, number>): number
  *   console.log(proxy(0,1)); // => "World"
  */
 export class ProxyFunctions extends Transformation {
-  public execute(code: string): string {
-    // 1. Parse code into an AST
-    const ast = parser.parse(code, {
-      sourceType: "module",
-      plugins: ["jsx", "typescript"], // Adjust plugins as needed
-    });
+  public execute(ast: types.File): void {
 
     // A map of functionName -> path for the function definition
     const proxyFunctions: Record<string, any> = {};
@@ -164,8 +158,5 @@ export class ProxyFunctions extends Transformation {
         }
       },
     });
-
-    // 4. Generate the transformed code
-    return generate(ast).code;
   }
 }
