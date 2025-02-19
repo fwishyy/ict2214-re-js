@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const default_config = new Config({
 		unpackArrays: true,
 		decodeStrings: true,
-		removeProxyFunctions: false,
+		removeProxyFunctions: true,
 	});
 
 	const myScheme = 'deobfuscate';
