@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { Transformation } from './transformers/transformation';
 import { ArrayUnpacker } from './transformers/arrayUnpacker';
 import { StringDecoder } from './transformers/stringDecoder';
+import { ProxyFunctions } from './transformers/proxyFunctions';
 
 // This is the function that is called when the extension is activated
 // Currently configured to a super barebones preview of the current file
@@ -33,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// you might want to test each transformation individually first
 		// TODO: verify that multiple transformations work concurrently
 		let transformations = [];
-		transformations.push(new StringDecoder());
+		transformations.push(new ProxyFunctions());
 
 		let deobfuscatedSrc = src;
 		for (let transformation of transformations) {
