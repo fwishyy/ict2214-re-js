@@ -1,14 +1,9 @@
 import { Transformation } from "./transformation";
-
-const parser = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
-const generate = require('@babel/generator').default;
-const types = require('@babel/types');
+import * as types from '@babel/types';
+import traverse from '@babel/traverse';
 
 export class StringDecoder extends Transformation {
-    execute(code: string): string {
-        const ast = parser.parse(code);
-
+    execute(ast: types.File) {
         traverse(ast, {
             StringLiteral(path: any) {
                 if (path.node.extra) {
@@ -16,7 +11,5 @@ export class StringDecoder extends Transformation {
                 }
             }
         });
-
-        return generate(ast).code;
     }
 }

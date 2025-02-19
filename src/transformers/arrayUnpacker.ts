@@ -1,11 +1,6 @@
 import { Transformation } from "./transformation";
-
-const fs = require('fs');
-
-const parser = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
-const generate = require('@babel/generator').default;
-const types = require('@babel/types');
+import * as types from '@babel/types';
+import traverse from '@babel/traverse';
 
 /*
     * Unpacks string elements that were moved out into arrays
@@ -15,9 +10,8 @@ const types = require('@babel/types');
 */
 
 export class ArrayUnpacker extends Transformation {
-    execute(code: string): string {
+    execute(ast: types.File): void {
 
-        const ast = parser.parse(code);
         const nodesToRemove: string[] = [];
 
         traverse(ast, {
@@ -58,13 +52,10 @@ export class ArrayUnpacker extends Transformation {
             CallExpression(path: any) {
                 const property = path.node.callee.property;
                 if (types.isStringLiteral(property)) {
-                    path.node.callee.property = types.Identifier(property.value);
+                    path.node.callee.property = types.identifier(property.value);
                     path.node.callee.computed = false;
                 }
             }
         });
-
-
-        return generate(ast).code;
     }
 }

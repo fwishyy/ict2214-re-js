@@ -1,4 +1,4 @@
-
+import * as types from '@babel/types';
 export abstract class Transformation {
-    abstract execute(code: string): string;
+    abstract execute(ast: types.File): void;
 }
