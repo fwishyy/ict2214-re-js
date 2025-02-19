@@ -5,6 +5,7 @@ import * as types from '@babel/types';
 import { ArrayUnpacker } from './transformers/arrayUnpacker';
 import { StringDecoder } from './transformers/stringDecoder';
 import { ProxyFunctions } from './transformers/proxyFunctions';
+import { ExpressionSimplifier } from './transformers/expressionSimplifier';
 
 /*
     * Executes various transformations on the code based on the configuration
@@ -31,7 +32,10 @@ export default class Deobfuscator {
         if (this.config.decodeStrings) {
             transformations.push(new StringDecoder());
         }
-
+        if (this.config.simplifyExpressions) {
+            transformations.push(new ExpressionSimplifier());
+        }
+        
         transformations.forEach((transformation) => {
             try {
                 transformation.execute(this.ast);
