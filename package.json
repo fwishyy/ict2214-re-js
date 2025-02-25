@@ -18,6 +18,10 @@
       {
         "command": "deobfuscate.preview",
         "title": "REJS: Deobfuscate Preview"
+      },
+      {
+        "command": "deobfuscate.detect",
+        "title": "REJS: Detect Obfuscation"
       }
     ]
   },
