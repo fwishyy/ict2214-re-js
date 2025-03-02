@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import Config from './config';
 import Deobfuscator from './deobfuscator';
+import Detector from './detector';
 
 // This is the function that is called when the extension is activated
 // Currently configured to a super barebones preview of the current file
@@ -14,7 +15,8 @@ export function activate(context: vscode.ExtensionContext) {
 		unpackArrays: true,
 		decodeStrings: true,
 		removeProxyFunctions: true,
-		simplifyExpressions: true
+		simplifyExpressions: true,
+		removeDeadCode: true
 	});
 
 	const myScheme = 'deobfuscate';
@@ -27,6 +29,18 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(myScheme, myProvider));
+
+	context.subscriptions.push(vscode.commands.registerCommand('deobfuscate.detect', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return;
+		}
+		const code = editor.document.getText();
+		const detector = new Detector(code);
+		detector.execute();
+	}));
+
+	// register command to preview deobfuscated code
 	context.subscriptions.push(vscode.commands.registerCommand('deobfuscate.preview', async () => {
 		const editor = vscode.window.activeTextEditor;
 		if (!editor) {

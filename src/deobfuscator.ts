@@ -6,6 +6,7 @@ import { ArrayUnpacker } from './transformers/arrayUnpacker';
 import { StringDecoder } from './transformers/stringDecoder';
 import { ProxyFunctions } from './transformers/proxyFunctions';
 import { ExpressionSimplifier } from './transformers/expressionSimplifier';
+import { DeadCodeRemover } from './transformers/deadCode';
 
 /*
     * Executes various transformations on the code based on the configuration
@@ -35,7 +36,10 @@ export default class Deobfuscator {
         if (this.config.simplifyExpressions) {
             transformations.push(new ExpressionSimplifier());
         }
-        
+        if (this.config.removeDeadCode) {
+            transformations.push(new DeadCodeRemover());
+        }
+
         transformations.forEach((transformation) => {
             try {
                 transformation.execute(this.ast);
