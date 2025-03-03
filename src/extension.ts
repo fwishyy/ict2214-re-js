@@ -16,7 +16,8 @@ export function activate(context: vscode.ExtensionContext) {
 		decodeStrings: true,
 		removeProxyFunctions: true,
 		simplifyExpressions: true,
-		removeDeadCode: true
+		removeDeadCode: true,
+		stringProxyFunctions: true
 	});
 
 	const myScheme = 'deobfuscate';

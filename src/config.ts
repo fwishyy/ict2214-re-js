@@ -4,6 +4,7 @@ export default class Config {
     public removeProxyFunctions: boolean;
     public simplifyExpressions: boolean;
     public removeDeadCode: boolean;
+    public stringProxyFunctions: boolean;
 
     constructor(options: ConfigOptions) {
         this.unpackArrays = options.unpackArrays;
@@ -11,6 +12,7 @@ export default class Config {
         this.removeProxyFunctions = options.removeProxyFunctions;
         this.simplifyExpressions = options.simplifyExpressions;
         this.removeDeadCode = options.removeDeadCode;
+        this.stringProxyFunctions = options.stringProxyFunctions;
     }
 }
 
@@ -20,4 +22,5 @@ export interface ConfigOptions {
     removeProxyFunctions: boolean;
     simplifyExpressions: boolean;
     removeDeadCode: boolean;
+    stringProxyFunctions: boolean;
 }
