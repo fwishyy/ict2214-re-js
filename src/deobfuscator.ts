@@ -26,14 +26,14 @@ export default class Deobfuscator {
         if (this.config.removeProxyFunctions) {
             transformations.push(new ProxyFunctions());
         }
-        if (this.config.unpackArrays) {
-            transformations.push(new ArrayUnpacker());
-        }
         if (this.config.decodeStrings) {
             transformations.push(new StringDecoder());
         }
         if (this.config.simplifyExpressions) {
             transformations.push(new ExpressionSimplifier());
+        }
+        if (this.config.unpackArrays) {
+            transformations.push(new ArrayUnpacker());
         }
         
         transformations.forEach((transformation) => {

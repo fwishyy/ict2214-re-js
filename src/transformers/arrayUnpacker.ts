@@ -15,7 +15,7 @@ export class ArrayUnpacker extends Transformation {
         const nodesToRemove: string[] = [];
 
         traverse(ast, {
-            MemberExpression(path: any) {
+            ["MemberExpression"](path: any) {
                 const { object, property } = path.node;
 
                 let idx = property.value;

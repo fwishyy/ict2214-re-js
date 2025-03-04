@@ -27,6 +27,9 @@ export class ExpressionSimplifier extends Transformation {
                 if (types.isLiteral(valueNode)) {
                     path.replaceWith(valueNode);
                 }
+                if (typeof value === "string") {
+                    path.replaceWith(types.stringLiteral(value)); // Substitute the simplified value
+                }
             }
         })
     }

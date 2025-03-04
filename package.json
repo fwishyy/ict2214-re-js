@@ -22,6 +22,10 @@
       {
         "command": "deobfuscate.detect",
         "title": "REJS: Detect Obfuscation"
+      },
+      {
+        "command": "deobfuscate.show",
+        "title": "REJS: Show Panel"
       }
     ]
   },
