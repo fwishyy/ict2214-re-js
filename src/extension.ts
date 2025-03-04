@@ -2,9 +2,11 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
+
 import Config from './config';
 import Deobfuscator from './deobfuscator';
 import Detector from './detector';
+
 
 // This is the function that is called when the extension is activated
 // Currently configured to a super barebones preview of the current file
@@ -76,6 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 				'deobfuscate',
 				'Deobfuscator',
 				vscode.ViewColumn.Two,
+		
 				{
 					enableScripts: true
 				}
@@ -114,43 +117,121 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
-// TODO: grab html from file instead of having it here
 function getWebviewContent() {
-	return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Deobfuscator</title>
+        <title>RE:JS Deobfuscator</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+                font-family: Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+            p {
+                font-size: 1.2em;
+                font-weight: bold;
+            }
+            .checkbox-group {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .checkbox-row {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+            }
+            label {
+                background-color: blue;
+                padding: 8px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                color: white;
+                font-weight: bold;
+                min-width: 150px; /* Reduced width */
+                justify-content: center;
+                font-size: 0.9em; /* Slightly smaller text */
+            }
+            input[type="checkbox"] {
+                margin-right: 8px;
+            }
+            .button-container {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                margin-top: 15px;
+            }
+            button {
+                background-color: white;
+                color: black;
+                border: none;
+                padding: 8px 15px;
+                font-size: 0.9em;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+            button:hover {
+                background-color: lightgray;
+            }
+        </style>
     </head>
     <body>
-        <h2>JS Deobfuscator</h2>
-        <form id="options">
-            <label><input type="checkbox" id="unpackArrays"> Unpack Arrays </label><br>
-            <label><input type="checkbox" id="decodeStrings"> Decode Strings </label><br>
-            <label><input type="checkbox" id="removeProxyFunctions"> Remove Proxy Functions </label><br>
-            <label><input type="checkbox" id="simplifyExpressions"> Simplify Expressions </label><br>
-            <button type="button" id="runDeobfuscation">Run</button>
-        </form>
+        <h1>Welcome to RE:JS</h1>
+        <p>Select a Transformation Method</p>
+        <div class="checkbox-group">
+            <div class="checkbox-row">
+                <label><input type="checkbox" id="unpackArrays"> Array Unpacker</label>
+                <label><input type="checkbox" id="decodeStrings"> Decode Strings</label>
+                <label><input type="checkbox" id="removeProxyFunctions"> Remove Proxy Functions</label>
+            </div>
+            <div class="checkbox-row">
+                <label><input type="checkbox" id="simplifyExpressions"> Simplify Expressions</label>
+            </div>
+        </div>
+        <div class="button-container">
+            <button type="button" id="runDeobfuscation">Deobfuscate</button>
+        </div>
         <script>
-			(function() {
-            const vscode = acquireVsCodeApi();
+            (function() {
+                const vscode = acquireVsCodeApi();
 
-			document.getElementById('runDeobfuscation').addEventListener('click', () => {
-				const options = {
-					unpackArrays: document.getElementById('unpackArrays').checked,
-					decodeStrings: document.getElementById('decodeStrings').checked,
-					removeProxyFunctions: document.getElementById('removeProxyFunctions').checked,
-					simplifyExpressions: document.getElementById('simplifyExpressions').checked
-				};
+                document.getElementById('runDeobfuscation').addEventListener('click', () => {
+                    const options = {
+                        unpackArrays: document.getElementById('unpackArrays').checked,
+                        decodeStrings: document.getElementById('decodeStrings').checked,
+                        removeProxyFunctions: document.getElementById('removeProxyFunctions').checked,
+                        simplifyExpressions: document.getElementById('simplifyExpressions').checked
+                    };
 
-				vscode.postMessage(options);
-			});
-        }())
+                    vscode.postMessage(options);
+                });
+            }())
         </script>
     </body>
     </html>`;
 }
+
+
+
+
 
 
 // This method is called when your extension is deactivated
