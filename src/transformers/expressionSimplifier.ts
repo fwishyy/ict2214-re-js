@@ -34,6 +34,6 @@ export class ExpressionSimplifier extends Transformation {
                 }
 
             }
-        })
+        });
     }
 }
