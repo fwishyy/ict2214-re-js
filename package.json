@@ -26,6 +26,7 @@
       {
         "command": "deobfuscate.show",
         "title": "REJS: Show Panel"
+
       }
     ]
   },

@@ -24,13 +24,18 @@ export class ExpressionSimplifier extends Transformation {
 
                 let value = evaluated.value;
                 let valueNode = types.valueToNode(value);
+
                 if (types.isLiteral(valueNode)) {
-                    path.replaceWith(valueNode);
+                    if (typeof value === "string") {
+                        path.replaceWith(types.stringLiteral(value));
+                    } else {
+                        path.replaceWith(valueNode);
+                    }
                 }
                 if (typeof value === "string") {
                     path.replaceWith(types.stringLiteral(value)); // Substitute the simplified value
                 }
             }
-        })
+        });
     }
 }

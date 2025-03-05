@@ -1,161 +1,92 @@
-// proxyFunctions.ts
+import { Transformation } from './transformation';
+import * as types from '@babel/types';
+import traverse from '@babel/traverse';
+import { parse } from '@babel/parser';
+import generate from '@babel/generator';
 
-import { Transformation } from "./transformation";
-import * as types from "@babel/types";
-import traverse from "@babel/traverse";
+export class ProxyFunctionRemover extends Transformation {
+    execute(ast: types.File): void {
+        const proxyFunctions: ProxyFunction[] = [];
+        traverse(ast, {
+            VariableDeclarator(path: any) {
+                const { node } = path;
+                const binding = path.scope.getBinding(node.id.name);
+                const references = binding.referencePaths;
+                const { init } = node;
+                if (types.isFunctionExpression(init) && isProxyFunction(init)) {
+                    const proxy = new ProxyFunction(node.id.name, init.body, init.params, references);
+                    proxyFunctions.push(proxy);
+                }
+            }
+        });
 
+        traverse(ast, {
+            Identifier(path: any) {
+                if (path.key === 'callee') {
+                    const proxy = proxyFunctions.find((proxy) => proxy.name === path.node.name);
+                    if (proxy && proxy.isValidReturn()) {
+                        // get the calling parameters
+                        const calling_args = path.parentPath.node.arguments;
+                        console.log(calling_args);
 
-/**
- * Helper function to evaluate simple numeric expressions using
- * - NumericLiteral
- * - Function parameter identifiers (mapped to numbers)
- * - Basic binary operations (+, -, *, /, %)
- *
- * Returns a number or undefined if it can't be computed.
- */
-function evaluateExpression(expr: any, paramMap: Record<string, number>): number | undefined {
-  // Case 1: Numeric literal
-  if (types.isNumericLiteral(expr)) {
-    return expr.value;
-  }
+                        // create param map with current proxy function
+                        const paramMap: any = {};
+                        proxy.params.forEach((param, index) => {
+                            paramMap[param.name] = calling_args[index];
+                        });
 
-  // Case 2: Identifier (function parameter reference)
-  if (types.isIdentifier(expr) && paramMap.hasOwnProperty(expr.name)) {
-    return paramMap[expr.name];
-  }
+                        const expression = parse(generate(proxy.body.body[0].argument).code);
+                        traverse(expression, {
+                            Identifier(path: any) {
+                                if (paramMap[path.node.name]) {
+                                    path.replaceWith(paramMap[path.node.name]);
+                                }
+                            }
+                        });
 
-  // Case 3: Binary expression (e.g., a + b, a - 2, etc.)
-  if (types.isBinaryExpression(expr)) {
-    const leftVal = evaluateExpression(expr.left, paramMap);
-    const rightVal = evaluateExpression(expr.right, paramMap);
+                        // replace the proxy function call with the evaluated expression
+                        path.parentPath.replaceWith(expression.program.body[0]);
+                    }
+                }
+            }
+        });
 
-    if (leftVal === undefined || rightVal === undefined) {
-      return undefined;
+        // remove the proxy functions
+        traverse(ast, {
+            VariableDeclarator(path: any) {
+                if (proxyFunctions.find((proxy) => proxy.name === path.node.id.name)) {
+                    path.remove();
+                }
+            }
+        });
     }
-
-    switch (expr.operator) {
-      case "+":
-        return leftVal + rightVal;
-      case "-":
-        return leftVal - rightVal;
-      case "*":
-        return leftVal * rightVal;
-      case "/":
-        // Avoid division by zero
-        if (rightVal === 0) return undefined;
-        return leftVal / rightVal;
-      case "%":
-        // Avoid modulus by zero
-        if (rightVal === 0) return undefined;
-        return leftVal % rightVal;
-    }
-  }
-
-  // Not a simple numeric expression we can handle
-  return undefined;
 }
 
-/**
- * A Transformation that detects "proxy functions" which simply return
- * an array element, with the index derived from the function parameters
- * via a simple arithmetic expression.
- *
- * Example:
- *   var arr = ["Hello", "World"];
- *   function proxy(a, b) {
- *     return arr[a + b];
- *   }
- *   console.log(proxy(0,1)); // => "World"
- */
-export class ProxyFunctions extends Transformation {
-  public execute(ast: types.File): void {
+function isProxyFunction(node: any): boolean {
+    return node.body.body.length === 1 && types.isReturnStatement(node.body.body[0]);
+}
 
-    // A map of functionName -> path for the function definition
-    const proxyFunctions: Record<string, any> = {};
+// generic class to store function information
+// proxy functions are defined as functions that have a single return statement
+class ProxyFunction {
+    public name: string;
+    public body: any;
+    public params: (types.Identifier)[];
+    public references: any;
+    constructor(name: string, body: any, params: any, references: any) {
+        this.name = name;
+        this.body = body;
+        this.params = params;
+        this.references = references;
+    }
 
-    // 2. Identify candidate proxy functions
-    traverse(ast, {
-      FunctionDeclaration(path: any) {
-        const { id, params, body } = path.node;
-        // We only handle a single return statement
-        if (body.body.length === 1 && types.isReturnStatement(body.body[0])) {
-          // e.g. function f(a, b) { return arr[a + b]; }
-          proxyFunctions[id.name] = path;
-        }
-      },
-    });
+    public isValidReturn(): boolean {
+        return !types.isCallExpression(this.body);
+    }
 
-    // 3. Inline calls to these proxy functions
-    traverse(ast, {
-      CallExpression(path: any) {
-        const callee = path.node.callee;
-        if (!types.isIdentifier(callee)) return; // Only direct calls, e.g. myFunc(...)
-        const fnName = callee.name;
+    public replaceParams(path: any) {
 
-        // Check if this is one of our recorded proxy functions
-        const proxyPath = proxyFunctions[fnName];
-        if (!proxyPath) return;
-
-        // Ensure the call's arg count matches the function's param count
-        const { params, body } = proxyPath.node;
-        if (path.node.arguments.length !== params.length) return;
-
-        // Build a param -> arg value map, but only if all args are numeric
-        const paramMap: Record<string, number> = {};
-        for (let i = 0; i < params.length; i++) {
-          const param = params[i];
-          const arg = path.node.arguments[i];
-          if (types.isIdentifier(param) && types.isNumericLiteral(arg)) {
-            paramMap[param.name] = arg.value;
-          } else {
-            // If we can't handle the argument, give up
-            return;
-          }
-        }
-
-        // The function body should have exactly one return statement
-        const returnStmt = body.body[0];
-        if (!types.isReturnStatement(returnStmt)) return;
-
-        const returnExpr = returnStmt.argument;
-        // We expect: return arr[ expression ]
-        if (!types.isMemberExpression(returnExpr)) return;
-
-        const arrayObj = returnExpr.object;
-        const indexNode = returnExpr.property;
-        if (!types.isIdentifier(arrayObj)) return;
-
-        // Look up the array definition in the function's scope
-        const arrayBinding = proxyPath.scope.getBinding(arrayObj.name);
-        if (!arrayBinding) return;
-
-        // Must be a variable: var arr = [...];
-        const declNode = arrayBinding.path.node;
-        if (
-          !types.isVariableDeclarator(declNode) ||
-          !types.isArrayExpression(declNode.init)
-        ) {
-          return;
-        }
-
-        // Evaluate the index expression
-        const indexValue = evaluateExpression(indexNode, paramMap);
-        if (indexValue === undefined) return;
-
-        // Get the array element at that index
-        const arrayElements = declNode.init.elements;
-        if (indexValue < 0 || indexValue >= arrayElements.length) return;
-        const elementNode = arrayElements[indexValue];
-
-        // If it's a literal (string/number), just replace
-        // Otherwise, you can replace with the entire node if needed
-        if (types.isStringLiteral(elementNode) || types.isNumericLiteral(elementNode)) {
-          path.replaceWith(elementNode);
-        } else {
-          // Optionally replace with the array element as-is
-          path.replaceWith(elementNode);
-        }
-      },
-    });
-  }
+        // this.body is the original function body
+        // we have to create a parameter map
+    }
 }

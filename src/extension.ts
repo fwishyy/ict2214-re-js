@@ -7,7 +7,6 @@ import Config from './config';
 import Deobfuscator from './deobfuscator';
 import Detector from './detector';
 
-
 // This is the function that is called when the extension is activated
 // Currently configured to a super barebones preview of the current file
 // TODO: Implement LIVE PREVIEW
@@ -17,7 +16,9 @@ export function activate(context: vscode.ExtensionContext) {
 		unpackArrays: true,
 		decodeStrings: true,
 		removeProxyFunctions: true,
-		simplifyExpressions: true
+		simplifyExpressions: true,
+		removeDeadCode: true,
+		stringProxyFunctions: true
 	});
 
 	const myScheme = 'deobfuscate';
