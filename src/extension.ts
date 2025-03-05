@@ -9,8 +9,6 @@ import Detector from './detector';
 
 // This is the function that is called when the extension is activated
 // Currently configured to a super barebones preview of the current file
-// TODO: Implement LIVE PREVIEW
-// TODO: Refactor this and probably move it somewhere else to facilitate different transformation options
 export function activate(context: vscode.ExtensionContext) {
 	const config = new Config({
 		unpackArrays: true,
@@ -53,16 +51,10 @@ export function activate(context: vscode.ExtensionContext) {
 		const deobfuscator = new Deobfuscator(config, src);
 		const deobfuscatedSrc = deobfuscator.execute();
 
-		// you can test your transformations here
-		// extend a Transformation class, write the execute function
-		// import it and push it into the transformations array here
-		// you might want to test each transformation individually first
-		// TODO: verify that multiple transformations work concurrently
-
 		const fileName = editor.document.fileName + '.deobfuscated';
 		const uri = vscode.Uri.parse(`${myScheme}://deobfuscate-preview/${fileName}?${deobfuscatedSrc}`);
 		const doc = await vscode.workspace.openTextDocument(uri);
-		await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+		await vscode.window.showTextDocument(doc, vscode.ViewColumn.Two);
 	}));
 
 	let lastActiveEditor: any = null; // Store the last focused editor
@@ -74,12 +66,15 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('deobfuscate.show', () => {
+		vscode.commands.registerCommand('rejs.activate', () => {
+			// once it's activated, lock in the first active editor
+
+			const editor = vscode.window.activeTextEditor;
 			const panel = vscode.window.createWebviewPanel(
 				'deobfuscate',
 				'Deobfuscator',
 				vscode.ViewColumn.Two,
-		
+
 				{
 					enableScripts: true
 				}
@@ -91,7 +86,6 @@ export function activate(context: vscode.ExtensionContext) {
 			panel.webview.onDidReceiveMessage(
 				async (options) => {
 					const config = new Config(options);
-					const editor = lastActiveEditor;
 					if (!editor) {
 						return;
 					}
@@ -100,26 +94,28 @@ export function activate(context: vscode.ExtensionContext) {
 					const deobfuscator = new Deobfuscator(config, src);
 					const deobfuscatedSrc = deobfuscator.execute();
 
-					// you can test your transformations here
-					// extend a Transformation class, write the execute function
-					// import it and push it into the transformations array here
-					// you might want to test each transformation individually first
-					// TODO: verify that multiple transformations work concurrently
-
 					const fileName = editor.document.fileName + '.deobfuscated';
 					const uri = vscode.Uri.parse(`${myScheme}://deobfuscate-preview/${fileName}?${deobfuscatedSrc}`);
 					const doc = await vscode.workspace.openTextDocument(uri);
-					await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+					await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
 				},
 				undefined,
 				context.subscriptions
 			);
 		})
 	);
+
+	const rejsButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    rejsButton.command = 'rejs.activate';
+    rejsButton.text = `$(globe) Activate RE:JS`;
+    rejsButton.tooltip = 'Click to activate RE:JS';
+    rejsButton.show();
+
+    context.subscriptions.push(rejsButton);
 }
 
 function getWebviewContent() {
-    return `<!DOCTYPE html>
+	return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -199,12 +195,14 @@ function getWebviewContent() {
         <p>Select a Transformation Method</p>
         <div class="checkbox-group">
             <div class="checkbox-row">
-                <label><input type="checkbox" id="unpackArrays"> Array Unpacker</label>
-                <label><input type="checkbox" id="decodeStrings"> Decode Strings</label>
-                <label><input type="checkbox" id="removeProxyFunctions"> Remove Proxy Functions</label>
+                <label><input type="checkbox" id="unpackArrays">Array Unpacker</label>
+                <label><input type="checkbox" id="decodeStrings">Decode Strings</label>
+                <label><input type="checkbox" id="removeProxyFunctions">Remove Proxy Functions</label>
             </div>
             <div class="checkbox-row">
-                <label><input type="checkbox" id="simplifyExpressions"> Simplify Expressions</label>
+                <label><input type="checkbox" id="simplifyExpressions">Simplify Expressions</label>
+                <label><input type="checkbox" id="removeDeadCode">Remove Dead Code</label>
+                <label><input type="checkbox" id="stringProxyFunctions">Remove String Functions</label>
             </div>
         </div>
         <div class="button-container">
@@ -219,7 +217,9 @@ function getWebviewContent() {
                         unpackArrays: document.getElementById('unpackArrays').checked,
                         decodeStrings: document.getElementById('decodeStrings').checked,
                         removeProxyFunctions: document.getElementById('removeProxyFunctions').checked,
-                        simplifyExpressions: document.getElementById('simplifyExpressions').checked
+                        simplifyExpressions: document.getElementById('simplifyExpressions').checked,
+                        removeDeadCode: document.getElementById('removeDeadCode').checked,
+                        stringProxyFunctions: document.getElementById('stringProxyFunctions').checked
                     };
 
                     vscode.postMessage(options);

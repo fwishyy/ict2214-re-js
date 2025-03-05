@@ -24,8 +24,8 @@
         "title": "REJS: Detect Obfuscation"
       },
       {
-        "command": "deobfuscate.show",
-        "title": "REJS: Show Panel"
+        "command": "rejs.activate",
+        "title": "REJS: Activate"
 
       }
     ]
