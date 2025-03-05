@@ -4,16 +4,8 @@ import { parse } from '@babel/parser';
 import * as types from '@babel/types';
 import { ArrayUnpacker } from './transformers/arrayUnpacker';
 import { StringDecoder } from './transformers/stringDecoder';
-<<<<<<< Updated upstream
-import { ProxyFunctions } from './transformers/proxyFunctions';
-<<<<<<< Updated upstream
+import { ProxyFunctionRemover } from './transformers/proxyFunctions';
 import { StringProxyFunctions } from './transformers/stringProxyFunctions';
-=======
-=======
-import { ProxyFunctionRemover } from './transformers/proxyFunctions2';
-import { StringProxyFunctions } from './transformers/stringProxyFunctions';
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 import { ExpressionSimplifier } from './transformers/expressionSimplifier';
 import { DeadCodeRemover } from './transformers/deadCode';
 
@@ -39,14 +31,14 @@ export default class Deobfuscator {
         if (this.config.stringProxyFunctions) {
             transformations.push(new StringProxyFunctions());
         }
-        if (this.config.unpackArrays) {
-            transformations.push(new ArrayUnpacker());
-        }
         if (this.config.decodeStrings) {
             transformations.push(new StringDecoder());
         }
         if (this.config.simplifyExpressions) {
             transformations.push(new ExpressionSimplifier());
+        }
+        if (this.config.unpackArrays) {
+            transformations.push(new ArrayUnpacker());
         }
         if (this.config.removeDeadCode) {
             transformations.push(new DeadCodeRemover());
