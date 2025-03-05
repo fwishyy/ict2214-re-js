@@ -43,7 +43,6 @@ export default class Deobfuscator {
         if (this.config.removeDeadCode) {
             transformations.push(new DeadCodeRemover());
         }
-
         transformations.forEach((transformation) => {
             try {
                 transformation.execute(this.ast);
