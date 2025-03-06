@@ -20,7 +20,7 @@
         "title": "REJS: Deobfuscate Preview"
       },
       {
-        "command": "deobfuscate.detect",
+        "command": "rejs.detect",
         "title": "REJS: Detect Obfuscation"
       },
       {
