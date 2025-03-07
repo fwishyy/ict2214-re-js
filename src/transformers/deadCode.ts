@@ -42,6 +42,10 @@ export class DeadCodeRemover extends Transformation {
                     path.remove();
                 }
             },
+
+            "EmptyStatement"(path: any) {
+                path.remove();
+            }
         });
     }
 }

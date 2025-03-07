@@ -18,7 +18,6 @@ export default class Detector {
     execute(): Config | null {
         // detect common obfusctors first
 
-
         const generatedConfig: Config = new Config({
             unpackArrays: false,
             decodeStrings: false,
@@ -28,24 +27,39 @@ export default class Detector {
             stringProxyFunctions: false
         });
 
+        const detectedMethods: string[] = [];
+
         if (detectJSFuck(this.code)) {
             vscode.window.showErrorMessage("It looks like the code is obfuscated with JSFuck, please use a suitable decoder");
             return generatedConfig;
         }
 
+        if (detectObfuscatorIO(this.code)) {
+            vscode.window.showErrorMessage("It looks like the code is obfuscated with Obfuscator.io, please use a suitable decoder");
+            return generatedConfig;
+        }
+
+        if (detectPackedArrays(this.ast)) {
+            detectedMethods.push('Packed Arrays');
+            generatedConfig.unpackArrays = true;
+        }
+
         if (detectProxyFunction(this.ast)) {
-            vscode.window.showInformationMessage("Proxy functions detected");
+            detectedMethods.push('Proxy Functions');
             generatedConfig.removeProxyFunctions = true;
         }
 
         if (detectEncodedString(this.ast)) {
-            vscode.window.showInformationMessage("Encoded strings detected");
+            detectedMethods.push('Encoded Strings');
             generatedConfig.decodeStrings = true;
         }
 
+        if (detectedMethods.length > 0) {
+            vscode.window.showInformationMessage(`Detected the following obfuscation techniques: ${detectedMethods.join(', ')}`);
+        }
         // display notification if no classical techniques are detected
         if (!Object.values(generatedConfig).some((value) => value === true)) {
-            vscode.window.showInformationMessage('No classical techniques detected, check if the file is obfuscated');
+            vscode.window.showErrorMessage('No classical techniques detected, check if the file is obfuscated');
         }
 
         return generatedConfig;
@@ -59,6 +73,13 @@ function detectJSFuck(code: string): boolean {
     };
     const regex = /[^[\]()!+]/g;
     return !regex.test(code);
+}
+
+function detectObfuscatorIO(code: string): boolean {
+    if (code.length === 0) {
+        return false;
+    }
+    return /_0x[0-9e-f]+/.test(code);
 }
 
 function detectProxyFunction(ast: types.File): boolean {
@@ -88,6 +109,32 @@ function detectEncodedString(ast: types.File): boolean {
             if (rawValue !== raw) {
                 test = true;
                 return;
+            }
+        }
+    });
+
+    return test;
+}
+
+function detectPackedArrays(ast: types.File): boolean {
+    let test = false;
+    traverse(ast, {
+        ["MemberExpression"](path: any) {
+            const { object, property } = path.node;
+
+            let binding = path.scope.getBinding(object.name);
+
+            if (!binding) {
+                return;
+            }
+
+            if (types.isArrayExpression(binding.path.node.init)) {
+                const { elements } = binding.path.node.init;
+                // check if htey are all stringliterals
+                if (elements.every((element: any) => types.isStringLiteral(element))) {
+                    test = true;
+                    return;
+                }
             }
         }
     });

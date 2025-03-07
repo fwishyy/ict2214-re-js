@@ -97,7 +97,7 @@ export function activate(context: vscode.ExtensionContext) {
                         const deobfuscator = new Deobfuscator(config, src);
                         const deobfuscatedSrc = deobfuscator.execute();
 
-                        const fileName = editor.document.fileName + '.deobfuscated';
+                        const fileName = editor.document.fileName + '.deobfuscated.js';
                         const uri = vscode.Uri.parse(`${myScheme}://deobfuscate-preview/${fileName}?${deobfuscatedSrc}`);
                         const doc = await vscode.workspace.openTextDocument(uri);
                         await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
