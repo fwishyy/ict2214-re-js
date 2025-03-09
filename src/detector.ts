@@ -54,6 +54,11 @@ export default class Detector {
             generatedConfig.decodeStrings = true;
         }
 
+        if (detectComplexExpressions(this.ast)) {
+            detectedMethods.push('Complex Expressions');
+            generatedConfig.simplifyExpressions = true;
+        }
+
         if (detectedMethods.length > 0) {
             vscode.window.showInformationMessage(`Detected the following obfuscation techniques: ${detectedMethods.join(', ')}`);
         }
@@ -135,6 +140,22 @@ function detectPackedArrays(ast: types.File): boolean {
                     test = true;
                     return;
                 }
+            }
+        }
+    });
+
+    return test;
+}
+
+function detectComplexExpressions(ast: types.File) {
+    let test = false;
+
+    traverse(ast, {
+        BinaryExpression(path: any) {
+            const { left, right } = path.node;
+            if (types.isBinaryExpression(left) || types.isBinaryExpression(right)) {
+                test = true;
+                return;
             }
         }
     });
